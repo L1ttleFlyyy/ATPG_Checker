@@ -4,9 +4,60 @@ build_env ()
 {
 	rm -rf test
 	mkdir test
-	cp ./simulator test
+	cp $SIM test
 	cp ckt/*/*.ckt test
 	cd test
+}
+
+stress_test ()
+{
+	build_env
+	cp ../ckt/*/*_t0.txt .
+	cp ../GOLD/pfs/*.flist .
+	touch cmd.tmp
+	for ckt in *.ckt; do
+		[ -f "$ckt" ] || break
+		name=`basename $ckt .ckt`
+		tv=$name"_t0.txt"
+		pfs_in=$name".flist"
+		sim_out=$name"_t0_output.txt"
+		dfs_out=$name"_t0_dfs.txt"
+		pfs_out=$name"_t0_pfs.txt"
+		echo "read $ckt" >> cmd.tmp
+		echo "lev" >> cmd.tmp
+		echo "logicsim $tv $sim_out" >> cmd.tmp
+		echo "dfs $tv $dfs_out" >> cmd.tmp
+		echo "pfs $tv $pfs_in $pfs_out" >> cmd.tmp
+		#cp $output $goldenfile
+	done
+	echo quit >> cmd.tmp
+	cat cmd.tmp 
+	ret=0
+	cat cmd.tmp | $SIM || ret=1
+	echo
+	if [ $ret -ne 0 ]; then
+		echo "Stress test failed..." && return
+	fi
+	
+	echo "Stress test passed! Press enter to compare results..."
+	read
+	for ckt in *.ckt; do
+		[ -f "$ckt" ] || break
+		name=`basename $ckt .ckt`
+		sim_out=$name"_t0_output.txt"
+		dfs_out=$name"_t0_dfs.txt"
+		pfs_out=$name"_t0_pfs.txt"
+		echo "compairing $name logicsim..."
+		diff -q <(sort $sim_out) <(sort "../GOLD/logicsim/GOLD_"$sim_out)
+		echo "compairing $name dfs..."
+		diff -q <(sort $dfs_out) <(sort "../GOLD/dfs/GOLD_"$dfs_out)
+		echo "compairing $name pfs..."
+		diff -q <(sort $pfs_out) <(sort "../GOLD/pfs/GOLD_"$pfs_out)
+		#cp $output $goldenfile
+	done
+	rm cmd.tmp
+	cd ..
+
 }
 
 lev_test ()
@@ -19,7 +70,7 @@ lev_test ()
 		output=$name"_level.txt"
 		goldenfile="../GOLD/$test/$output"
 		echo "comparing $name ..."
-		printf "read $ckt\nlev\nquit\n" | ./simulator >> /dev/null
+		printf "read $ckt\nlev\nquit\n" | $SIM >> /dev/null
 		diff -q <(sort $output) <(sort $goldenfile)
 		#cp $output $goldenfile
 	done
@@ -41,7 +92,7 @@ sim_test ()
 			output=`basename $tv .txt`"_output.txt"
 			goldenfile="../GOLD/$test/GOLD_$output"
 			cp $t .
-			printf "read $ckt\nlev\n$test $tv $output\nquit\n" | ./simulator >> /dev/null
+			printf "read $ckt\nlev\n$test $tv $output\nquit\n" | $SIM >> /dev/null
 			echo "comparing $tv ..."
 			diff -q <(sort $output) <(sort $goldenfile)
 			#cp $output $goldenfile
@@ -62,7 +113,7 @@ flr_test ()
 		output=$name"_flr.txt"
 		goldenfile="../GOLD/$test/$output"
 		echo "comparing $name ..."
-		printf "read $ckt\nlev\n$test $output\nquit\n" | ./simulator >> /dev/null
+		printf "read $ckt\nlev\n$test $output\nquit\n" | $SIM >> /dev/null
 		diff -q <(sort $output) <(sort $goldenfile)
 		# cp $output $goldenfile
 	done
@@ -79,7 +130,7 @@ flr2_test ()
 		output=$name"_flr2.txt"
 		goldenfile="../GOLD/$test/$output"
 		echo "comparing $name ..."
-		printf "read $ckt\nlev\n$test $output\nquit\n" | ./simulator >> /dev/null
+		printf "read $ckt\nlev\n$test $output\nquit\n" | $SIM >> /dev/null
 		diff -q <(sort $output) <(sort $goldenfile)
 		# cp $output $goldenfile
 	done
@@ -101,7 +152,7 @@ dfs_test ()
 			output=`basename $tv .txt`"_dfs.txt"
 			goldenfile="../GOLD/$test/GOLD_$output"
 			cp $t .
-			printf "read $ckt\nlev\n$test $tv $output\nquit\n" | ./simulator >> /dev/null
+			printf "read $ckt\nlev\n$test $tv $output\nquit\n" | $SIM >> /dev/null
 			echo "comparing $tv ..."
 			diff -q <(sort $output) <(sort $goldenfile)
 			# cp $output $goldenfile
@@ -129,7 +180,7 @@ pfs_test ()
 			output=`basename $tv .txt`"_pfs.txt"
 			goldenfile="../GOLD/$test/GOLD_$output"
 			cp $t .
-			printf "read $ckt\nlev\n$test $tv $flist $output\nquit\n" | ./simulator >> /dev/null
+			printf "read $ckt\nlev\n$test $tv $flist $output\nquit\n" | $SIM >> /dev/null
 			echo "comparing $tv ..."
 			diff -q <(sort $output) <(sort $goldenfile)
 			# cp $output $goldenfile
@@ -147,7 +198,7 @@ if [ ! -f "$SIM" ]; then
 	exit 1
 fi
 
-echo "select: lev sim flr flr2 dfs pfs"
+echo "select: lev sim flr flr2 dfs pfs stress"
 read INPUT_STRING
 case $INPUT_STRING in
 	lev)
@@ -167,6 +218,9 @@ case $INPUT_STRING in
 		;;
 	pfs)
 		pfs_test
+		;;
+	stress)
+		stress_test
 		;;
 	*)
 		echo "Sorry, I don't understand"
