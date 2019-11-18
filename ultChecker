@@ -1,0 +1,175 @@
+#!/bin/bash
+
+build_env ()
+{
+	rm -rf test
+	mkdir test
+	cp ./simulator test
+	cp ckt/*/*.ckt test
+	cd test
+}
+
+lev_test ()
+{
+	build_env
+	test="lev"
+	for ckt in *.ckt; do
+		[ -f "$ckt" ] || break
+		name=`basename $ckt .ckt`
+		output=$name"_level.txt"
+		goldenfile="../GOLD/$test/$output"
+		echo "comparing $name ..."
+		printf "read $ckt\nlev\nquit\n" | ./simulator >> /dev/null
+		diff -q <(sort $output) <(sort $goldenfile)
+		#cp $output $goldenfile
+	done
+	cd ..
+}
+
+sim_test () 
+{
+	build_env
+	test="logicsim"
+	for ckt in *.ckt; do
+		[ -f "$ckt" ] || break
+		name=`basename $ckt .ckt`
+		echo "checking $name, press any key to continue..."
+		read
+		for t in ../ckt/$name/*.txt; do
+			[ -f "$t" ] || break
+			tv=`basename $t`
+			output=`basename $tv .txt`"_output.txt"
+			goldenfile="../GOLD/$test/GOLD_$output"
+			cp $t .
+			printf "read $ckt\nlev\n$test $tv $output\nquit\n" | ./simulator >> /dev/null
+			echo "comparing $tv ..."
+			diff -q <(sort $output) <(sort $goldenfile)
+			#cp $output $goldenfile
+			rm $tv
+		done
+		echo
+	done
+	cd ..
+}
+
+flr_test ()
+{
+	build_env
+	test="flr"
+	for ckt in *.ckt; do
+		[ -f "$ckt" ] || break
+		name=`basename $ckt .ckt`
+		output=$name"_flr.txt"
+		goldenfile="../GOLD/$test/$output"
+		echo "comparing $name ..."
+		printf "read $ckt\nlev\n$test $output\nquit\n" | ./simulator >> /dev/null
+		diff -q <(sort $output) <(sort $goldenfile)
+		# cp $output $goldenfile
+	done
+	cd ..
+}
+
+flr2_test ()
+{
+	build_env
+	test="flr2"
+	for ckt in *.ckt; do
+		[ -f "$ckt" ] || break
+		name=`basename $ckt .ckt`
+		output=$name"_flr2.txt"
+		goldenfile="../GOLD/$test/$output"
+		echo "comparing $name ..."
+		printf "read $ckt\nlev\n$test $output\nquit\n" | ./simulator >> /dev/null
+		diff -q <(sort $output) <(sort $goldenfile)
+		# cp $output $goldenfile
+	done
+	cd ..
+}
+
+dfs_test ()
+{
+	build_env
+	test="dfs"
+	for ckt in *.ckt; do
+		[ -f "$ckt" ] || break
+		name=`basename $ckt .ckt`
+		echo "checking $name, press any key to continue..."
+		read
+		for t in ../ckt/$name/*.txt; do
+			[ -f "$t" ] || break
+			tv=`basename $t`
+			output=`basename $tv .txt`"_dfs.txt"
+			goldenfile="../GOLD/$test/GOLD_$output"
+			cp $t .
+			printf "read $ckt\nlev\n$test $tv $output\nquit\n" | ./simulator >> /dev/null
+			echo "comparing $tv ..."
+			diff -q <(sort $output) <(sort $goldenfile)
+			# cp $output $goldenfile
+			rm $tv
+		done
+		echo
+	done
+	cd ..
+}
+
+pfs_test ()
+{
+	build_env
+	test="pfs"
+	for ckt in *.ckt; do
+		[ -f "$ckt" ] || break
+		name=`basename $ckt .ckt`
+		flist="$name.flist"
+		cp "../GOLD/pfs/$flist" .
+		echo "checking $name, press any key to continue..."
+		read
+		for t in ../ckt/$name/*.txt; do
+			[ -f "$t" ] || break
+			tv=`basename $t`
+			output=`basename $tv .txt`"_pfs.txt"
+			goldenfile="../GOLD/$test/GOLD_$output"
+			cp $t .
+			printf "read $ckt\nlev\n$test $tv $flist $output\nquit\n" | ./simulator >> /dev/null
+			echo "comparing $tv ..."
+			diff -q <(sort $output) <(sort $goldenfile)
+			# cp $output $goldenfile
+			rm $tv
+		done
+		echo
+		rm $flist
+	done
+	cd ..
+}
+
+SIM="./simulator"
+if [ ! -f "$SIM" ]; then
+	echo "please copy your simulator here..."
+	exit 1
+fi
+
+echo "select: lev sim flr flr2 dfs pfs"
+read INPUT_STRING
+case $INPUT_STRING in
+	lev)
+		lev_test
+		;;
+	sim)
+		sim_test
+		;;
+	flr)
+		flr_test
+		;;
+	flr2)
+		flr2_test
+		;;
+	dfs)
+		dfs_test
+		;;
+	pfs)
+		pfs_test
+		;;
+	*)
+		echo "Sorry, I don't understand"
+		;;
+esac
+echo 
