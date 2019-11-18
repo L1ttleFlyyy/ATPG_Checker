@@ -15,7 +15,7 @@ cp <path to your simulator> ./simulator
 # follow the instruction and enjoy!
 ./ultChecker
 ```
-#Example
+# Example
 ```
 >> ./ultChecker
 select: lev sim flr flr2 dfs pfs
