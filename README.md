@@ -12,6 +12,6 @@ cp <path to your simulator> ./simulator
 # Usage
 
 ```
-## enjoy!
-./ultiChecker
+# follow the instruction and enjoy!
+./ultChecker
 ```
