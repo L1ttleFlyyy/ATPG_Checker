@@ -129,11 +129,10 @@ flr2_test ()
 		name=`basename $ckt .ckt`
 		output=$name"_flr2.txt"
 		goldenfile="../GOLD/$test/$output"
-		echo "comparing $name ..."
 		printf "read $ckt\nlev\n$test $output\nquit\n" | $SIM >> /dev/null
 		count1=`cat $output | wc -l`
 		count2=`cat $goldenfile | wc -l`
-		[ "$count1" == "$count2" ] || echo "$name flr2 differs!" 
+		[ "$count1" == "$count2" ] || echo "$name flr2 differs!!!" 
 		# cp $output $goldenfile
 	done
 	cd ..
